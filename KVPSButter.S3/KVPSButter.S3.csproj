@@ -1,13 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageVersion>0.0.2-beta</PackageVersion>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Description>An S3 destination for the key-value-pair abstraction library</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/kenkendk/kvpsbutter</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kenkendk/kvpsbutter.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Key-value-pair KVP</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="3.7.304.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <ItemGroup>
