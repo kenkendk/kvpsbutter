@@ -48,7 +48,7 @@ public class Loader : IKVPSFactory
         var (username, password) = parsed.GetRequiredCredentials();
         var pathparts = parsed.Path.Split("/", 2, StringSplitOptions.None);
         var bucket = pathparts[0];
-        var prefix = pathparts.LastOrDefault() ?? string.Empty;
+        var prefix = pathparts.Skip(1).LastOrDefault() ?? string.Empty;
 
         if (config.Bucket != null)
             bucket = config.Bucket;

@@ -35,5 +35,4 @@ As the key-value-pair abstraction is quite simple, most kinds of storage should 
 
 - `s3`, `aws` store data on an S3 compatible destination
 
-## 
 
