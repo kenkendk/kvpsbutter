@@ -73,7 +73,7 @@ public record ParsedConnectionString(
     /// <param name="type">The value type to find</param>
     /// <param name="name">The option name</param>
     /// <returns>The parsed option</returns>
-    public object GetRequiredOption(Type type, string name)
+    public object? GetRequiredOption(Type type, string name)
     {
         if (!Options.TryGetValue(name, out var v) || string.IsNullOrWhiteSpace(v))
             throw new InvalidOptionException($"The required option \"{name}\" is missing");
@@ -98,7 +98,7 @@ public record ParsedConnectionString(
     /// <param name="name">The option name for error messages</param>
     /// <param name="value">The value being parsed</param>
     /// <returns>The parsed option</returns>
-    public object Parse(Type type, string name, string value)
+    public object? Parse(Type type, string name, string value)
     {
         value = value.Trim();
         try
