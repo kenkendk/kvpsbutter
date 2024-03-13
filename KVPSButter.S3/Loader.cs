@@ -38,7 +38,9 @@ public class Loader : IKVPSFactory
         [Description("Override for the path prefix, using the URL after bucket name if not provided")]
         string? Prefix = null,
         [Description("The service URL if not using AWS S3")]
-        string? ServiceUrl = null
+        string? ServiceUrl = null,
+        [Description("Toggles the use of GetObjectAttributes")]
+        bool DisableGetObjectAttributes = false
     );
 
     /// <inheritdoc/>
@@ -63,6 +65,6 @@ public class Loader : IKVPSFactory
             s3cfg.ServiceURL = config.ServiceUrl;
 
         var client = new AmazonS3Client(new BasicAWSCredentials(username, password), s3cfg);
-        return new KVPS(client, bucket, prefix);
+        return new KVPS(client, bucket, prefix, config.DisableGetObjectAttributes);
     }
 }

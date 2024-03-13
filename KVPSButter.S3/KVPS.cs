@@ -21,6 +21,10 @@ public class KVPS : IKVPS, IKVPSBatch
     /// The configured entry prefix
     /// </summary>
     private readonly string m_prefix;
+    /// <summary>
+    /// Flag toggling the use og GetObjectAttributes
+    /// </summary>
+    private readonly bool m_disableGetObjectAttributes;
 
     /// <summary>
     /// Creates a new KVPS instance
@@ -28,14 +32,15 @@ public class KVPS : IKVPS, IKVPSBatch
     /// <param name="client">The pre-configured client</param>
     /// <param name="bucket">The bucket name</param>
     /// <param name="prefix">The optional key prefix</param>
-    /// <exception cref="ArgumentNullException"></exception>
-    public KVPS(AmazonS3Client client, string bucket, string prefix)
+    /// <param name="disableGetObjectAttributes">Flag that toggles disabling the GetObjectAttributes method call</param>
+    public KVPS(AmazonS3Client client, string bucket, string prefix, bool disableGetObjectAttributes)
     {
         m_client = client ?? throw new ArgumentNullException(nameof(client));
         if (string.IsNullOrWhiteSpace(bucket))
             throw new ArgumentNullException(nameof(bucket));
         m_bucket = bucket;
         m_prefix = prefix ?? string.Empty;
+        m_disableGetObjectAttributes = disableGetObjectAttributes;
     }
 
     /// <summary>
@@ -83,7 +88,7 @@ public class KVPS : IKVPS, IKVPSBatch
                 ContinuationToken = continuationToken,
                 Prefix = MapKeyToRemotePath(query.Prefix ?? string.Empty),
                 MaxKeys = Math.Min(remaining, pagesize)
-            }, cancellationToken);
+            }, cancellationToken).ConfigureAwait(false);
 
             foreach (var obj in resp.S3Objects)
                 yield return new KVP(MapRemoteKeyToPath(obj.Key), obj.Size, obj.LastModified, null, null, obj.ETag, null);
@@ -98,26 +103,52 @@ public class KVPS : IKVPS, IKVPSBatch
     /// <inheritdoc/>
     public async Task<KVP?> GetInfoAsync(string key, CancellationToken cancellationToken = default)
     {
-        var resp = await m_client.GetObjectAttributesAsync(new GetObjectAttributesRequest()
+        if (m_disableGetObjectAttributes)
         {
-            BucketName = m_bucket,
-            Key = MapKeyToRemotePath(key)
-        }, cancellationToken);
+            var obj = await m_client.GetObjectAsync(new GetObjectRequest() {
+                BucketName = m_bucket,
+                Key = key,
+                ByteRange = new ByteRange(0, 0)
+            }, cancellationToken).ConfigureAwait(false);
 
-        return new KVP(
-            key,
-            resp.ObjectSize,
-            resp.LastModified,
-            null, null,
-            resp.ETag,
-            null
-        );
+            var length = obj.ContentLength;
+            if (length <= 1 && obj.ContentRange.StartsWith("bytes 0-0/"))
+                length = long.Parse(obj.ContentRange.Split('/', 2).Last());
+            
+            return new KVP(
+                key,
+                length,
+                null, 
+                obj.LastModified,
+                null,
+                obj.ETag,
+                null
+            );
+        }
+        else
+        {
+            var resp = await m_client.GetObjectAttributesAsync(new GetObjectAttributesRequest()
+            {
+                BucketName = m_bucket,
+                Key = MapKeyToRemotePath(key)
+            }, cancellationToken).ConfigureAwait(false);
+
+            return new KVP(
+                key,
+                resp.ObjectSize,
+                null, 
+                resp.LastModified,
+                null,
+                resp.ETag,
+                null
+            );
+        }
     }
 
     /// <inheritdoc/>
     public async Task<Stream?> ReadAsync(string key, CancellationToken cancellationToken = default)
     {
-        var resp = await m_client.GetObjectAsync(m_bucket, MapKeyToRemotePath(key), cancellationToken);
+        var resp = await m_client.GetObjectAsync(m_bucket, MapKeyToRemotePath(key), cancellationToken).ConfigureAwait(false);
         return resp.ResponseStream;
     }
 
