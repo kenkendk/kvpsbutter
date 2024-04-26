@@ -105,20 +105,21 @@ public class KVPS : IKVPS, IKVPSBatch
     {
         if (m_disableGetObjectAttributes)
         {
-            var obj = await m_client.GetObjectAsync(new GetObjectRequest() {
+            using var obj = await m_client.GetObjectAsync(new GetObjectRequest()
+            {
                 BucketName = m_bucket,
-                Key = key,
+                Key = MapKeyToRemotePath(key),
                 ByteRange = new ByteRange(0, 0)
             }, cancellationToken).ConfigureAwait(false);
 
             var length = obj.ContentLength;
             if (length <= 1 && obj.ContentRange.StartsWith("bytes 0-0/"))
                 length = long.Parse(obj.ContentRange.Split('/', 2).Last());
-            
+
             return new KVP(
                 key,
                 length,
-                null, 
+                null,
                 obj.LastModified,
                 null,
                 obj.ETag,
@@ -130,13 +131,17 @@ public class KVPS : IKVPS, IKVPSBatch
             var resp = await m_client.GetObjectAttributesAsync(new GetObjectAttributesRequest()
             {
                 BucketName = m_bucket,
-                Key = MapKeyToRemotePath(key)
+                Key = MapKeyToRemotePath(key),
+                ObjectAttributes = new List<ObjectAttributes>() {
+                    ObjectAttributes.ObjectSize,
+                    ObjectAttributes.ETag
+                 }
             }, cancellationToken).ConfigureAwait(false);
 
             return new KVP(
                 key,
                 resp.ObjectSize,
-                null, 
+                null,
                 resp.LastModified,
                 null,
                 resp.ETag,
