@@ -25,6 +25,10 @@ public class KVPS : IKVPS, IKVPSBatch
     /// Flag toggling the use og GetObjectAttributes
     /// </summary>
     private readonly bool m_disableGetObjectAttributes;
+    /// <summary>
+    /// The cursor prefix
+    /// </summary>
+    private const string CursorPrefix = "cv1";
 
     /// <summary>
     /// Creates a new KVPS instance
@@ -79,6 +83,18 @@ public class KVPS : IKVPS, IKVPSBatch
         var remaining = query.MaxResults ?? int.MaxValue;
         var pagesize = query.PageSize ?? 1000;
         var continuationToken = string.Empty;
+        var skip = 0;
+
+        if (!string.IsNullOrWhiteSpace(query.Cursor))
+        {
+            var parts = query.Cursor.Split(':', 3);
+            if (parts.Length != 3 || parts[0] != CursorPrefix)
+                throw new InvalidCursorException("Invalid cursor format");
+            if (!int.TryParse(parts[1], out skip) || skip < 0)
+                throw new InvalidCursorException("Invalid cursor format");
+
+            continuationToken = parts[2];
+        }
 
         while (remaining > 0)
         {
@@ -90,10 +106,24 @@ public class KVPS : IKVPS, IKVPSBatch
                 MaxKeys = Math.Min(remaining, pagesize)
             }, cancellationToken).ConfigureAwait(false);
 
+            var items = 0;
             foreach (var obj in resp.S3Objects)
-                yield return new KVP(MapRemoteKeyToPath(obj.Key), obj.Size, obj.LastModified, null, null, obj.ETag, null);
+            {
+                if (skip > 0)
+                {
+                    skip--;
+                    continue;
+                }
 
-            remaining -= resp.S3Objects.Count;
+                yield return new KVP(MapRemoteKeyToPath(obj.Key), obj.Size, obj.LastModified, null, $"{CursorPrefix}:{items}:{continuationToken}", obj.ETag, null);
+
+                items++;
+                remaining--;
+                if (remaining <= 0)
+                    yield break;
+            }
+
+            remaining -= items;
             continuationToken = resp.ContinuationToken;
             if (!resp.IsTruncated)
                 yield break;
