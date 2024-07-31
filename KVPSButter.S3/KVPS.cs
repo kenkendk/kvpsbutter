@@ -94,6 +94,8 @@ public class KVPS : IKVPS, IKVPSBatch
                 throw new InvalidCursorException("Invalid cursor format");
 
             continuationToken = parts[2];
+            if (string.IsNullOrWhiteSpace(continuationToken))
+                continuationToken = null;
         }
 
         while (remaining > 0)
@@ -131,7 +133,7 @@ public class KVPS : IKVPS, IKVPSBatch
                     yield break;
             }
 
-            continuationToken = resp.ContinuationToken;
+            continuationToken = resp.NextContinuationToken;
             if (!resp.IsTruncated)
                 yield break;
         }
