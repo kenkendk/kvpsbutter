@@ -109,12 +109,14 @@ public class KVPS : IKVPS, IKVPSBatch
             var items = 0;
             foreach (var obj in resp.S3Objects)
             {
+                items++;
                 if (skip > 0)
                 {
                     skip--;
                     continue;
                 }
 
+                remaining--;
                 yield return new KVP(
                     MapRemoteKeyToPath(obj.Key),
                     obj.Size,
@@ -125,13 +127,10 @@ public class KVPS : IKVPS, IKVPSBatch
                     null
                 );
 
-                items++;
-                remaining--;
                 if (remaining <= 0)
                     yield break;
             }
 
-            remaining -= items;
             continuationToken = resp.ContinuationToken;
             if (!resp.IsTruncated)
                 yield break;
