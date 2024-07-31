@@ -115,7 +115,15 @@ public class KVPS : IKVPS, IKVPSBatch
                     continue;
                 }
 
-                yield return new KVP(MapRemoteKeyToPath(obj.Key), obj.Size, obj.LastModified, null, $"{CursorPrefix}:{items}:{continuationToken}", obj.ETag, null);
+                yield return new KVP(
+                    MapRemoteKeyToPath(obj.Key),
+                    obj.Size,
+                    null,
+                    obj.LastModified,
+                    $"{CursorPrefix}:{items}:{continuationToken}",
+                    obj.ETag,
+                    null
+                );
 
                 items++;
                 remaining--;
