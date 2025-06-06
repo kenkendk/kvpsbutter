@@ -40,7 +40,11 @@ public class Loader : IKVPSFactory
         [Description("The service URL if not using AWS S3")]
         string? ServiceUrl = null,
         [Description("Toggles the use of GetObjectAttributes")]
-        bool DisableGetObjectAttributes = false
+        bool DisableGetObjectAttributes = false,
+        [Description("Forces the use of path-style URLs instead of virtual-hosted-style URLs")]
+        bool ForcePathStyle = false,
+        [Description("Disable chunked transfer encoding for uploads")]
+        bool DisableChunkedEncoding = false
     );
 
     /// <inheritdoc/>
@@ -60,11 +64,15 @@ public class Loader : IKVPSFactory
         if (string.IsNullOrWhiteSpace(bucket))
             throw new InvalidOptionException("The bucket name is required");
 
-        var s3cfg = new AmazonS3Config() { UseHttp = false };
+        var s3cfg = new AmazonS3Config()
+        {
+            UseHttp = false,
+            ForcePathStyle = config.ForcePathStyle
+        };
         if (!string.IsNullOrWhiteSpace(config.ServiceUrl))
             s3cfg.ServiceURL = config.ServiceUrl;
 
         var client = new AmazonS3Client(new BasicAWSCredentials(username, password), s3cfg);
-        return new KVPS(client, bucket, prefix, config.DisableGetObjectAttributes);
+        return new KVPS(client, bucket, prefix, config.DisableGetObjectAttributes, config.DisableChunkedEncoding);
     }
 }

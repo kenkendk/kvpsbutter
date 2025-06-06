@@ -26,6 +26,10 @@ public class KVPS : IKVPS, IKVPSBatch
     /// </summary>
     private readonly bool m_disableGetObjectAttributes;
     /// <summary>
+    /// Flag toggling the use of chunked transfer encoding for uploads
+    /// </summary>
+    private readonly bool m_disableChunkedEncoding;
+    /// <summary>
     /// The cursor prefix
     /// </summary>
     private const string CursorPrefix = "cv1";
@@ -37,7 +41,8 @@ public class KVPS : IKVPS, IKVPSBatch
     /// <param name="bucket">The bucket name</param>
     /// <param name="prefix">The optional key prefix</param>
     /// <param name="disableGetObjectAttributes">Flag that toggles disabling the GetObjectAttributes method call</param>
-    public KVPS(AmazonS3Client client, string bucket, string prefix, bool disableGetObjectAttributes)
+    /// <param name="disableChunkedEncoding">Flag that toggles disabling chunked transfer encoding for uploads</param>
+    public KVPS(AmazonS3Client client, string bucket, string prefix, bool disableGetObjectAttributes, bool disableChunkedEncoding)
     {
         m_client = client ?? throw new ArgumentNullException(nameof(client));
         if (string.IsNullOrWhiteSpace(bucket))
@@ -45,6 +50,7 @@ public class KVPS : IKVPS, IKVPSBatch
         m_bucket = bucket;
         m_prefix = prefix ?? string.Empty;
         m_disableGetObjectAttributes = disableGetObjectAttributes;
+        m_disableChunkedEncoding = disableChunkedEncoding;
     }
 
     /// <summary>
@@ -203,7 +209,8 @@ public class KVPS : IKVPS, IKVPSBatch
         {
             BucketName = m_bucket,
             Key = MapKeyToRemotePath(key),
-            InputStream = data
+            InputStream = data,
+            UseChunkEncoding = !m_disableChunkedEncoding
         }, cancellationToken);
     }
 
