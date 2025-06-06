@@ -26,4 +26,6 @@ Bucket: Override for the bucket name, using the URL bucket name if not provided
 Prefix: Override for the path prefix, using the URL after bucket name if not provided
 ServiceUrl: The service URL if not using AWS S3,
 DisableGetObjectAttributes: Disables the use of GetObjectAttributes for metadata, using empty GetObject request instead
+ForcePathStyle: Forces the use of path-style URLs instead of virtual-hosted-style URLs
+DisableChunkedEncoding: Disable chunked transfer encoding for uploads
 ```
