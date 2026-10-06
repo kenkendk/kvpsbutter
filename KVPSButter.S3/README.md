@@ -28,5 +28,5 @@ ServiceUrl: The service URL if not using AWS S3,
 DisableGetObjectAttributes: Disables the use of GetObjectAttributes for metadata, using empty GetObject request instead
 ForcePathStyle: Forces the use of path-style URLs instead of virtual-hosted-style URLs
 DisableChunkedEncoding: Disable chunked transfer encoding for uploads
-ChecksumAlgorithm: The checksum algorithm to send with uploads (CRC32, CRC32C, SHA1 or SHA256); required by buckets with Object Lock
+ChecksumAlgorithm: The checksum algorithm to send with uploads (CRC32 or SHA256); required by buckets with Object Lock
 ```
