@@ -29,6 +29,11 @@ public class KVPS : IKVPS, IKVPSBatch
     /// Flag toggling the use of chunked transfer encoding for uploads
     /// </summary>
     private readonly bool m_disableChunkedEncoding;
+
+    /// <summary>
+    /// The checksum algorithm sent with uploads, if any
+    /// </summary>
+    private readonly ChecksumAlgorithm? m_checksumAlgorithm;
     /// <summary>
     /// The cursor prefix
     /// </summary>
@@ -42,7 +47,7 @@ public class KVPS : IKVPS, IKVPSBatch
     /// <param name="prefix">The optional key prefix</param>
     /// <param name="disableGetObjectAttributes">Flag that toggles disabling the GetObjectAttributes method call</param>
     /// <param name="disableChunkedEncoding">Flag that toggles disabling chunked transfer encoding for uploads</param>
-    public KVPS(AmazonS3Client client, string bucket, string prefix, bool disableGetObjectAttributes, bool disableChunkedEncoding)
+    public KVPS(AmazonS3Client client, string bucket, string prefix, bool disableGetObjectAttributes, bool disableChunkedEncoding, ChecksumAlgorithm? checksumAlgorithm)
     {
         m_client = client ?? throw new ArgumentNullException(nameof(client));
         if (string.IsNullOrWhiteSpace(bucket))
@@ -51,6 +56,7 @@ public class KVPS : IKVPS, IKVPSBatch
         m_prefix = prefix ?? string.Empty;
         m_disableGetObjectAttributes = disableGetObjectAttributes;
         m_disableChunkedEncoding = disableChunkedEncoding;
+        m_checksumAlgorithm = checksumAlgorithm;
     }
 
     /// <summary>
@@ -210,7 +216,8 @@ public class KVPS : IKVPS, IKVPSBatch
             BucketName = m_bucket,
             Key = MapKeyToRemotePath(key),
             InputStream = data,
-            UseChunkEncoding = !m_disableChunkedEncoding
+            UseChunkEncoding = !m_disableChunkedEncoding,
+            ChecksumAlgorithm = m_checksumAlgorithm
         }, cancellationToken);
     }
 

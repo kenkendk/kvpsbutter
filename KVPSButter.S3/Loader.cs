@@ -1,5 +1,6 @@
 
 using System.ComponentModel;
+using System.Reflection;
 using Amazon.Runtime;
 using Amazon.S3;
 
@@ -44,7 +45,9 @@ public class Loader : IKVPSFactory
         [Description("Forces the use of path-style URLs instead of virtual-hosted-style URLs")]
         bool ForcePathStyle = false,
         [Description("Disable chunked transfer encoding for uploads")]
-        bool DisableChunkedEncoding = false
+        bool DisableChunkedEncoding = false,
+        [Description("The checksum algorithm to send with uploads, one of the algorithms the AWS SDK knows (such as CRC32 or SHA256)")]
+        string? ChecksumAlgorithm = null
     );
 
     /// <inheritdoc/>
@@ -72,7 +75,30 @@ public class Loader : IKVPSFactory
         if (!string.IsNullOrWhiteSpace(config.ServiceUrl))
             s3cfg.ServiceURL = config.ServiceUrl;
 
+        var checksumAlgorithm = string.IsNullOrWhiteSpace(config.ChecksumAlgorithm)
+            ? null
+            : ParseChecksumAlgorithm(config.ChecksumAlgorithm);
+
         var client = new AmazonS3Client(new BasicAWSCredentials(username, password), s3cfg);
-        return new KVPS(client, bucket, prefix, config.DisableGetObjectAttributes, config.DisableChunkedEncoding);
+        return new KVPS(client, bucket, prefix, config.DisableGetObjectAttributes, config.DisableChunkedEncoding, checksumAlgorithm);
     }
+
+    /// <summary>
+    /// The checksum algorithms the AWS SDK defines, read from its constants so new ones are picked up with the SDK
+    /// </summary>
+    private static readonly IReadOnlyList<ChecksumAlgorithm> KnownChecksumAlgorithms = typeof(ChecksumAlgorithm)
+        .GetFields(BindingFlags.Public | BindingFlags.Static)
+        .Where(x => x.FieldType == typeof(ChecksumAlgorithm))
+        .Select(x => (ChecksumAlgorithm)x.GetValue(null)!)
+        .ToList();
+
+    /// <summary>
+    /// Finds the checksum algorithm named by an option value
+    /// </summary>
+    /// <param name="name">The option value, matched case-insensitively against the SDK's algorithm names</param>
+    /// <returns>The algorithm</returns>
+    /// <exception cref="InvalidOptionException">The SDK defines no algorithm with that name</exception>
+    private static ChecksumAlgorithm ParseChecksumAlgorithm(string name)
+        => KnownChecksumAlgorithms.FirstOrDefault(x => string.Equals(x.Value, name, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOptionException($"Unsupported checksum algorithm: {name}. Supported: {string.Join(", ", KnownChecksumAlgorithms.Select(x => x.Value))}");
 }

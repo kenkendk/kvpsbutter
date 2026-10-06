@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KVPSButter.Postgres\KVPSButter.Postgres.csproj" />
+    <ProjectReference Include="..\KVPSButter.S3\KVPSButter.S3.csproj" />
     <ProjectReference Include="..\KVPSButter\KVPSButter.csproj" />
   </ItemGroup>
 
