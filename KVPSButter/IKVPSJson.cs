@@ -28,7 +28,7 @@ public interface IKVPSJson : IKVPS
 /// <summary>
 /// Extender for supporting <see cref="IKVPSJson"/> on a <see cref="IKVPS"/> that has no native JSON support
 /// </summary>
-public class KVPSJsonExtender : KVPSExtender, IKVPSJson
+public class KVPSJsonExtender : KVPSExtender, IKVPSJson, IKVPSPrefixEnumeration
 {
     public KVPSJsonExtender(IKVPS parent)
         : base(parent)

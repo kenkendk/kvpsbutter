@@ -54,7 +54,7 @@ public class PrefixKeyTransformer : IKVPSKeyTransformer
     }
 }
 
-public class KVPSKeyWrapper : IKVPS
+public class KVPSKeyWrapper : IKVPS, IKVPSPrefixEnumeration
 {
     protected readonly IKVPS m_parent;
     protected readonly IKVPSKeyTransformer m_keyTransformer;
@@ -80,6 +80,22 @@ public class KVPSKeyWrapper : IKVPS
             q = q with { Prefix = m_keyTransformer.LocalKeyToRemoteKey(q.Prefix) };
         await foreach (var k in m_parent.EnumerateAsync(q, cancellationToken))
             yield return k with { Key = m_keyTransformer.RemoteKeyToLocalKey(k.Key) };
+    }
+
+    /// <summary>
+    /// Lists the distinct prefixes below the transformed query prefix, natively where the parent supports it.
+    /// An empty query prefix is transformed too, so the listing stays inside the transformed key space.
+    /// </summary>
+    /// <param name="query">The optional query; its prefix, page size, result limit and cursor are used</param>
+    /// <param name="delimiter">The delimiter separating the levels, for example <c>/</c></param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>The distinct prefixes, as local keys, each with a cursor to resume after it</returns>
+    public async IAsyncEnumerable<KVPPrefix> EnumeratePrefixesAsync(KVPSQuery? query, string delimiter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var q = query ?? KVPSQuery.Empty;
+        q = q with { Prefix = m_keyTransformer.LocalKeyToRemoteKey(q.Prefix ?? string.Empty) };
+        await foreach (var p in m_parent.EnumeratePrefixesAsync(q, delimiter, cancellationToken))
+            yield return p with { Prefix = m_keyTransformer.RemoteKeyToLocalKey(p.Prefix) };
     }
 
     public async Task<KVP?> GetInfoAsync(string key, CancellationToken cancellationToken = default)

@@ -33,6 +33,16 @@ public abstract class KVPSExtender
     public IAsyncEnumerable<KVP> EnumerateAsync(KVPSQuery? query = null, CancellationToken cancellationToken = default)
         => m_parent.EnumerateAsync(query, cancellationToken);
 
+    /// <summary>
+    /// Lists the distinct prefixes through the parent store, natively where the parent supports it
+    /// </summary>
+    /// <param name="query">The optional query; its prefix, page size, result limit and cursor are used</param>
+    /// <param name="delimiter">The delimiter separating the levels, for example <c>/</c></param>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns>The distinct prefixes, each with a cursor to resume after it</returns>
+    public IAsyncEnumerable<KVPPrefix> EnumeratePrefixesAsync(KVPSQuery? query, string delimiter, CancellationToken cancellationToken = default)
+        => m_parent.EnumeratePrefixesAsync(query, delimiter, cancellationToken);
+
     /// <inheritdoc/>
     public Task<KVP?> GetInfoAsync(string key, CancellationToken cancellationToken = default)
         => m_parent.GetInfoAsync(key, cancellationToken);

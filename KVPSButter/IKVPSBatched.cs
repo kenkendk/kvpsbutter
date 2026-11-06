@@ -43,7 +43,7 @@ public interface IKVPSBatch : IKVPS
 /// <summary>
 /// Extender class for giving <see cref="IKVPSBatch"/> functionality on a <see cref="IKVPS"/> without native support
 /// </summary>
-public class KVPSBatchExtender : KVPSExtender, IKVPSBatch
+public class KVPSBatchExtender : KVPSExtender, IKVPSBatch, IKVPSPrefixEnumeration
 {
     /// <summary>
     /// Creates a new instance of <see cref="KVPSBatchExtender"/>
